@@ -51,6 +51,40 @@ app.use('/api/sms', smsRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/customers', customerRoutes);
 
+// Contact form endpoint
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, phone, service, message } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required' });
+    }
+    
+    // Here we would integrate with an email service like SendGrid, Mailgun, or AWS SES
+    // For now, we'll use nodemailer with a configured SMTP service
+    const emailContent = `
+New Contact Form Submission from M. Jacob Company Website
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone || 'Not provided'}
+Service Requested: ${service || 'General inquiry'}
+
+Message:
+${message}
+    `;
+    
+    // TODO: Replace with actual email sending logic using nodemailer or email service
+    console.log('Contact form submission:', emailContent);
+    
+    res.json({ success: true, message: 'Thank you for contacting us. We will get back to you soon!' });
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({ error: 'Failed to send message. Please call us at 412-512-0425.' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
