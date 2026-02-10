@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Jacob HVAC - Professional Heating & Cooling Services</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>Mark Jacob HVAC</h1>
+                <p class="tagline">Your Comfort, Our Priority</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <a href="tel:555-HVAC-NOW" class="emergency-btn">24/7 Emergency</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Professional HVAC & Plumbing Services</h2>
+                <p>Reliable heating, cooling, and plumbing solutions for your home and business</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="scrollToSection('contact')">Schedule Service</button>
+                    <button class="btn btn-secondary" onclick="scrollToSection('pricing')">View Pricing</button>
+                </div>
+                <div class="trust-badges">
+                    <div class="badge">
+                        <span class="badge-icon">✓</span>
+                        <span>Licensed & Insured</span>
+                    </div>
+                    <div class="badge">
+                        <span class="badge-icon">⏰</span>
+                        <span>24/7 Emergency</span>
+                    </div>
+                    <div class="badge">
+                        <span class="badge-icon">⭐</span>
+                        <span>5-Star Service</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2 class="section-title">Our Services</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">❄️</div>
+                    <h3>Air Conditioning</h3>
+                    <p>Installation, repair, and maintenance of all AC systems. Keep cool all summer long.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🔥</div>
+                    <h3>Heating Systems</h3>
+                    <p>Furnace installation and repair. Stay warm during the coldest months.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🔧</div>
+                    <h3>Plumbing Services</h3>
+                    <p>Complete plumbing solutions from leaks to installations.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🛠️</div>
+                    <h3>Maintenance Plans</h3>
+                    <p>Preventive maintenance to keep your systems running efficiently.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <h3>Emergency Repairs</h3>
+                    <p>24/7 emergency service when you need us most.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">💨</div>
+                    <h3>Air Quality</h3>
+                    <p>Indoor air quality testing and improvement solutions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">Why Choose Mark Jacob HVAC?</h2>
+            <div class="about-content">
+                <div class="about-item">
+                    <h3>Experience You Can Trust</h3>
+                    <p>With over 20 years of experience serving our community, we've built a reputation for quality workmanship and honest service.</p>
+                </div>
+                <div class="about-item">
+                    <h3>Certified Technicians</h3>
+                    <p>All our technicians are fully licensed, insured, and continuously trained on the latest HVAC and plumbing technologies.</p>
+                </div>
+                <div class="about-item">
+                    <h3>Upfront Pricing</h3>
+                    <p>No hidden fees or surprises. We provide detailed estimates before any work begins.</p>
+                </div>
+                <div class="about-item">
+                    <h3>Satisfaction Guaranteed</h3>
+                    <p>We stand behind our work with comprehensive warranties and a 100% satisfaction guarantee.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Transparent Pricing</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Service Call</h3>
+                    <div class="price">$89</div>
+                    <ul class="pricing-features">
+                        <li>Complete system diagnosis</li>
+                        <li>Expert recommendation</li>
+                        <li>Waived with repair</li>
+                    </ul>
+                    <button class="btn btn-outline" onclick="openChat('Schedule a service call')">Schedule Now</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Most Popular</div>
+                    <h3>Maintenance Plan</h3>
+                    <div class="price">$199<span>/year</span></div>
+                    <ul class="pricing-features">
+                        <li>2 annual tune-ups</li>
+                        <li>Priority scheduling</li>
+                        <li>15% off repairs</li>
+                        <li>Extended warranties</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="openChat('Tell me about maintenance plans')">Learn More</button>
+                </div>
+                <div class="pricing-card">
+                    <h3>Emergency Service</h3>
+                    <div class="price">24/7</div>
+                    <ul class="pricing-features">
+                        <li>Same-day service</li>
+                        <li>After-hours available</li>
+                        <li>Fast response time</li>
+                    </ul>
+                    <button class="btn btn-outline" onclick="openChat('I need emergency service')">Contact Us</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Get In Touch</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h3>Contact Information</h3>
+                    <div class="contact-item">
+                        <strong>Phone:</strong>
+                        <a href="tel:555-HVAC-NOW">(555) HVAC-NOW</a>
+                    </div>
+                    <div class="contact-item">
+                        <strong>Email:</strong>
+                        <a href="mailto:service@markjacobhvac.com">service@markjacobhvac.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <strong>Hours:</strong>
+                        <p>Mon-Fri: 8am - 6pm<br>Sat: 9am - 4pm<br>Emergency: 24/7</p>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <h3>Schedule a Service</h3>
+                    <p>Use our AI assistant to quickly schedule service, get a quote, or ask any questions. Click the chat bubble in the bottom right corner!</p>
+                    <button class="btn btn-primary" onclick="openChat('I need to schedule service')">Open Chat Assistant</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Mark Jacob HVAC. All rights reserved.</p>
+            <p>Licensed | Insured | Bonded</p>
+        </div>
+    </footer>
+
+    <!-- Floating Chat Button -->
+    <div class="chat-bubble" id="chatBubble" onclick="toggleChat()">
+        <div class="chat-icon">💬</div>
+        <div class="chat-badge" id="chatBadge">AI</div>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <div class="chat-header-content">
+                <div class="status-dot"></div>
+                <div>
+                    <h3>HVAC Assistant</h3>
+                    <p>Here to help 24/7</p>
+                </div>
+            </div>
+            <button class="chat-close" onclick="toggleChat()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Hello! I'm your Mark Jacob HVAC assistant. How can I help you today?
+                </div>
+            </div>
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-action-btn" onclick="sendQuickMessage('Schedule a maintenance appointment')">Schedule Service</button>
+                <button class="quick-action-btn" onclick="sendQuickMessage('Emergency repair needed')">Emergency</button>
+                <button class="quick-action-btn" onclick="sendQuickMessage('Get pricing information')">Pricing</button>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()" id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
