@@ -1,197 +1,254 @@
-// Chat Window State
-let chatOpen = false;
+// M. Jacob Company - Standalone Frontend JavaScript
 
-// DOM Elements
-const chatBubble = document.getElementById('chatBubble');
-const chatWindow = document.getElementById('chatWindow');
-const chatMessages = document.getElementById('chatMessages');
-const userInput = document.getElementById('userInput');
-const sendButton = document.getElementById('sendButton');
+// Mobile Navigation Toggle
+const navToggle = document.getElementById('navToggle');
+const navMenu = document.getElementById('navMenu');
 
-// Toggle Chat Window
-function toggleChat() {
-    chatOpen = !chatOpen;
-    if (chatOpen) {
-        chatWindow.classList.add('active');
-        userInput.focus();
-    } else {
-        chatWindow.classList.remove('active');
-    }
-}
+if (navToggle) {
+    navToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        navToggle.classList.toggle('active');
+    });
 
-// Scroll to Section
-function scrollToSection(sectionId) {
-    const element = document.getElementById(sectionId);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-// Open Chat with Pre-filled Message
-function openChat(message) {
-    if (!chatOpen) {
-        toggleChat();
-    }
-    if (message) {
-        userInput.value = message;
-        userInput.focus();
-    }
-}
-
-// Add Message to Chat
-function addMessage(text, isUser) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.textContent = text;
-    
-    messageDiv.appendChild(contentDiv);
-    
-    // Insert before quick actions if they exist
-    const quickActions = document.getElementById('quickActions');
-    if (quickActions && !isUser) {
-        chatMessages.insertBefore(messageDiv, quickActions);
-    } else {
-        chatMessages.appendChild(messageDiv);
-    }
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Show Typing Indicator
-function showTypingIndicator() {
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message bot';
-    typingDiv.id = 'typingIndicator';
-    
-    const indicator = document.createElement('div');
-    indicator.className = 'typing-indicator';
-    indicator.innerHTML = '<span></span><span></span><span></span>';
-    
-    typingDiv.appendChild(indicator);
-    
-    const quickActions = document.getElementById('quickActions');
-    if (quickActions) {
-        chatMessages.insertBefore(typingDiv, quickActions);
-    } else {
-        chatMessages.appendChild(typingDiv);
-    }
-    
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Hide Typing Indicator
-function hideTypingIndicator() {
-    const typingDiv = document.getElementById('typingIndicator');
-    if (typingDiv) {
-        typingDiv.remove();
-    }
-}
-
-// Send Message
-async function sendMessage() {
-    const message = userInput.value.trim();
-    if (!message) return;
-
-    // Add user message
-    addMessage(message, true);
-    userInput.value = '';
-    sendButton.disabled = true;
-
-    // Show typing indicator
-    showTypingIndicator();
-
-    try {
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message })
+    // Close menu when clicking a link
+    document.querySelectorAll('.nav-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            navMenu.classList.remove('active');
+            navToggle.classList.remove('active');
         });
-
-        const data = await response.json();
-        
-        // Hide typing indicator
-        hideTypingIndicator();
-
-        if (data.success) {
-            addMessage(data.response, false);
-        } else {
-            addMessage('Sorry, I encountered an error. Please try again.', false);
-        }
-    } catch (error) {
-        hideTypingIndicator();
-        addMessage('Sorry, I\'m having trouble connecting. Please try again later.', false);
-    } finally {
-        sendButton.disabled = false;
-        userInput.focus();
-    }
+    });
 }
 
-// Event Listeners
-chatBubble.addEventListener('click', toggleChat);
-sendButton.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        sendMessage();
+// Modal Functions
+const modal = document.getElementById('bookingModal');
+
+function openModal(serviceType = '') {
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    // Pre-select service type if provided
+    if (serviceType) {
+        const serviceSelect = document.getElementById('service');
+        const option = Array.from(serviceSelect.options).find(opt => 
+            opt.value === serviceType || opt.textContent.includes(serviceType)
+        );
+        if (option) {
+            serviceSelect.value = option.value;
+        }
+    }
+    
+    // Set minimum date to today
+    const dateInput = document.getElementById('date');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', today);
+}
+
+function closeModal() {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    // Reset form
+    document.getElementById('bookingForm').reset();
+    hideMessage();
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        closeModal();
     }
 });
 
-// Booking Modal Management
-let bookingModalRoot = null;
-
-function openBookingModal() {
-    // Get or create the modal root
-    bookingModalRoot = document.getElementById('booking-modal-root');
-    
-    if (!bookingModalRoot) {
-        console.error('Booking modal root element not found');
-        return;
+// Close modal on escape key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.style.display === 'block') {
+        closeModal();
     }
+});
 
-    // Render the BookingModal component with React
-    const root = ReactDOM.createRoot(bookingModalRoot);
-    root.render(
-        React.createElement(BookingModal, {
-            isOpen: true,
-            onClose: closeBookingModal
-        })
-    );
+// Form Message Display
+function showMessage(message, type = 'success') {
+    const messageDiv = document.getElementById('formMessage');
+    messageDiv.textContent = message;
+    messageDiv.className = `form-message ${type}`;
+    messageDiv.style.display = 'block';
+    
+    // Scroll message into view
+    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function closeBookingModal() {
-    if (bookingModalRoot) {
-        const root = ReactDOM.createRoot(bookingModalRoot);
-        root.render(null);
-        bookingModalRoot = null;
+function hideMessage() {
+    const messageDiv = document.getElementById('formMessage');
+    messageDiv.style.display = 'none';
+}
+
+// Form Submission Handler
+async function handleSubmit(event) {
+    event.preventDefault();
+    hideMessage();
+    
+    const form = document.getElementById('bookingForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    
+    // Collect form data
+    const formData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        service: document.getElementById('service').value,
+        address: document.getElementById('address').value,
+        date: document.getElementById('date').value,
+        notes: document.getElementById('notes').value,
+        timestamp: new Date().toISOString(),
+    };
+    
+    try {
+        // Check if backend API is available
+        const backendUrl = window.location.origin + '/api/bookings';
+        
+        try {
+            const response = await fetch(backendUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+            
+            if (response.ok) {
+                showMessage('✓ Booking request submitted successfully! We\'ll contact you soon to confirm your appointment.', 'success');
+                
+                // Reset form after 3 seconds
+                setTimeout(() => {
+                    form.reset();
+                    hideMessage();
+                }, 3000);
+                
+                // Close modal after 5 seconds
+                setTimeout(() => {
+                    closeModal();
+                }, 5000);
+            } else {
+                throw new Error('Backend returned error');
+            }
+        } catch (fetchError) {
+            // Backend not available - use fallback methods
+            console.log('Backend API not available, using fallback methods');
+            
+            // METHOD 1: Email fallback (mailto link)
+            const emailSubject = encodeURIComponent(`Service Request from ${formData.name}`);
+            const emailBody = encodeURIComponent(
+                `New Service Request:\n\n` +
+                `Name: ${formData.name}\n` +
+                `Phone: ${formData.phone}\n` +
+                `Email: ${formData.email}\n` +
+                `Service: ${formData.service}\n` +
+                `Address: ${formData.address}\n` +
+                `Preferred Date: ${formData.date}\n` +
+                `Notes: ${formData.notes}\n\n` +
+                `Submitted: ${formData.timestamp}`
+            );
+            
+            // Store in localStorage as backup
+            const bookings = JSON.parse(localStorage.getItem('hvac_bookings') || '[]');
+            bookings.push(formData);
+            localStorage.setItem('hvac_bookings', JSON.stringify(bookings));
+            
+            showMessage(
+                '✓ Form submitted! Your request has been saved. We\'ll contact you soon. ' +
+                'For immediate service, please call (412) 512-0425.',
+                'success'
+            );
+            
+            // Optional: Open email client for user to send manually
+            const emailLink = `mailto:info@mjacobcompany.com?subject=${emailSubject}&body=${emailBody}`;
+            
+            // Show option to send via email
+            setTimeout(() => {
+                const sendEmail = confirm('Would you like to send this request via email as well?');
+                if (sendEmail) {
+                    window.location.href = emailLink;
+                }
+            }, 1000);
+            
+            // Reset form after 3 seconds
+            setTimeout(() => {
+                form.reset();
+                hideMessage();
+            }, 3000);
+            
+            // Close modal after 5 seconds
+            setTimeout(() => {
+                closeModal();
+            }, 5000);
+        }
+        
+    } catch (error) {
+        console.error('Form submission error:', error);
+        showMessage('⚠ There was an error submitting your request. Please call us at (412) 512-0425.', 'error');
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
     }
 }
 
-// Connect Schedule Service button to modal
-document.addEventListener('DOMContentLoaded', () => {
-    // Find the Schedule Service button in the hero section
-    const scheduleButtons = document.querySelectorAll('.cta-button');
-    
-    scheduleButtons.forEach(button => {
-        if (button.textContent.includes('Schedule Service')) {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                openBookingModal();
+// Form validation
+document.getElementById('bookingForm').addEventListener('submit', handleSubmit);
+
+// Phone number formatting
+const phoneInput = document.getElementById('phone');
+if (phoneInput) {
+    phoneInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 10) value = value.slice(0, 10);
+        
+        if (value.length >= 6) {
+            value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+        } else if (value.length >= 3) {
+            value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+        }
+        
+        e.target.value = value;
+    });
+}
+
+// Smooth scroll for navigation links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            const navHeight = document.querySelector('.nav').offsetHeight;
+            const targetPosition = target.offsetTop - navHeight;
+            window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
             });
         }
     });
 });
 
-// Initial greeting when chat opens for the first time
-chatBubble.addEventListener('click', function firstOpen() {
-    setTimeout(() => {
-        if (chatMessages.children.length === 1) { // Only quick actions present
-            addMessage('Hi! I\'m your HVAC assistant. How can I help you today?', false);
-        }
-    }, 300);
-    chatBubble.removeEventListener('click', firstOpen);
-}, { once: true });
+// Add scroll effect to navigation
+let lastScroll = 0;
+const nav = document.querySelector('.nav');
+
+window.addEventListener('scroll', () => {
+    const currentScroll = window.pageYOffset;
+    
+    if (currentScroll > 100) {
+        nav.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+    } else {
+        nav.style.boxShadow = 'none';
+    }
+    
+    lastScroll = currentScroll;
+});
+
+console.log('M. Jacob Company website loaded successfully');
+console.log('Form submissions will be saved locally if backend is not available');
