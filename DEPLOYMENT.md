@@ -1,346 +1,239 @@
-# Production Deployment Guide
+# M. Jacob Company HVAC - Deployment Guide
 
-Complete guide to deploy HVAC AI Secretary to your server.
+## Overview
+This system has a frontend (static HTML/CSS/JS) and a backend (Node.js/Express API) with email notifications.
 
-## Server Requirements
+## What Was Built
 
-- Ubuntu 20.04+ or similar Linux
-- Root or sudo access
-- At least 1GB RAM
-- Node.js 18+
-- PostgreSQL 14+
-- Nginx
+### Frontend Changes
+- Fixed script.js and style.css loading paths (changed from `/script.js` to `./script.js`)
+- Updated booking form to send data to `/api/bookings`
+- Form fields: name, phone, email, service, datetime, message
 
-## Step-by-Step Deployment
+### Backend API
+- **Endpoint**: `POST /api/bookings`
+- **Functionality**:
+  - Receives booking form submissions
+  - Sends email notification immediately
+  - Stores booking in PostgreSQL database (if available)
+  - Returns success/error response
 
-### 1. Initial Server Setup
+### Email Notification System
+- Uses nodemailer with Gmail
+- Sends formatted email with all booking details
+- Includes timestamp in ET timezone
 
+## Server Setup Steps
+
+### 1. Install Dependencies
 ```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 18
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
-
-# Install Nginx
-sudo apt install -y nginx
-
-# Install PM2 (process manager)
-sudo npm install -g pm2
+cd backend
+npm install
 ```
 
-### 2. Setup PostgreSQL Database
+This will install:
+- express
+- pg (PostgreSQL)
+- cors
+- nodemailer (NEW - for email notifications)
 
-```bash
-# Switch to postgres user
-sudo -u postgres psql
+### 2. Set Up Environment Variables
 
-# In PostgreSQL shell:
-CREATE DATABASE hvac_crm;
-CREATE USER hvacuser WITH ENCRYPTED PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE hvac_crm TO hvacuser;
-\q
-
-# Import schema
-sudo -u postgres psql -d hvac_crm -f /path/to/hvac-crm-schema.sql
-```
-
-### 3. Clone and Setup Application
-
-```bash
-# Create app directory
-sudo mkdir -p /var/www/hvac-ai
-cd /var/www/hvac-ai
-
-# Clone repository (or upload files)
-git clone https://github.com/dutchiono/hvac-ai-secretary.git .
-
-# Install dependencies
-npm install --production
-
-# Create .env file
-cp env.example .env
-nano .env  # Edit with your credentials
-```
-
-### 4. Configure Environment (.env)
+Create a `.env` file in the `backend` directory:
 
 ```env
-NODE_ENV=production
-PORT=3001
-
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=hvac_crm
-DB_USER=hvacuser
-DB_PASSWORD=your_secure_password
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
 
-TWILIO_ACCOUNT_SID=your_twilio_sid
-TWILIO_AUTH_TOKEN=your_twilio_token
-TWILIO_PHONE_NUMBER=+1234567890
+# Gmail Configuration (REQUIRED for email notifications)
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-app-specific-password
+NOTIFICATION_EMAIL=dutchiono@gmail.com
 
-BUSINESS_NAME=Your HVAC Company
-BUSINESS_PHONE=+1234567890
-BUSINESS_EMAIL=contact@yourhvac.com
-
-FRONTEND_URL=https://yourdomain.com
+# Server Configuration
+PORT=3000
+NODE_ENV=production
 ```
 
-### 5. Start Application with PM2
+### 3. Gmail App Password Setup
+
+**IMPORTANT**: You need a Gmail App Password (not your regular password)
+
+1. Go to Google Account settings: https://myaccount.google.com/
+2. Security → 2-Step Verification (enable if not already)
+3. Security → App Passwords
+4. Generate new app password for "Mail"
+5. Copy the 16-character password
+6. Use this in `GMAIL_APP_PASSWORD` environment variable
+
+### 4. Set Up PostgreSQL Database
 
 ```bash
-# Start the app
-pm2 start server.js --name hvac-ai
+# Connect to PostgreSQL
+psql -U postgres
 
-# Enable startup on boot
-pm2 startup systemd
-pm2 save
+# Create database
+CREATE DATABASE hvac_crm;
 
-# Check status
-pm2 status
-pm2 logs hvac-ai
+# Connect to the database
+\c hvac_crm
+
+# Run the init script
+\i /path/to/backend/init_bookings.sql
 ```
 
-### 6. Configure Nginx Reverse Proxy
+Or run directly:
+```bash
+psql -U postgres -d hvac_crm -f backend/init_bookings.sql
+```
+
+### 5. Start the Backend Server
 
 ```bash
-# Create Nginx configuration
-sudo nano /etc/nginx/sites-available/hvac-ai
+cd backend
+npm start
 ```
 
-Add this configuration:
+For development with auto-reload:
+```bash
+npm run dev
+```
+
+### 6. Deploy Frontend Files
+
+Copy these files to your web server's public directory:
+- `public/index.html`
+- `public/style.css`
+- `public/script.js`
+
+Make sure the backend API is accessible at `/api/*` (use nginx reverse proxy if needed)
+
+## Testing the System
+
+### Test Email Notifications
+```bash
+curl -X POST http://localhost:3000/api/bookings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Customer",
+    "phone": "412-555-0123",
+    "email": "test@example.com",
+    "service": "Clean & Check",
+    "datetime": "2024-02-20",
+    "message": "Test booking"
+  }'
+```
+
+You should receive an email at `NOTIFICATION_EMAIL` with the booking details.
+
+### Test Database Storage
+```bash
+# Check if booking was stored
+psql -U postgres -d hvac_crm -c "SELECT * FROM bookings ORDER BY created_at DESC LIMIT 5;"
+```
+
+## Nginx Configuration (Optional but Recommended)
+
+If using Nginx as reverse proxy:
 
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name mjacobcompany.com;
 
-    # API Backend
-    location /api {
-        proxy_pass http://localhost:3001;
+    # Serve frontend files
+    root /var/www/mjacobcompany/public;
+    index index.html;
+
+    # Frontend static files
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API proxy
+    location /api/ {
+        proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-    }
-
-    # Frontend (Chat Widget)
-    location / {
-        root /var/www/hvac-ai;
-        try_files $uri $uri/ /chat-widget.html;
     }
 }
 ```
 
-Enable the site:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/hvac-ai /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### 7. Setup SSL with Let's Encrypt
-
-```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
-
-# Get SSL certificate
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-
-# Auto-renewal is configured automatically
-```
-
-### 8. Configure Firewall
-
-```bash
-sudo ufw allow 'Nginx Full'
-sudo ufw allow OpenSSH
-sudo ufw enable
-```
-
-### 9. Test Deployment
-
-```bash
-# Check if API is running
-curl http://localhost:3001/health
-
-# Check if Nginx is serving
-curl https://yourdomain.com
-
-# Check PM2 status
-pm2 status
-
-# View logs
-pm2 logs hvac-ai
-```
-
-## Monitoring
-
-### View Application Logs
-
-```bash
-# Real-time logs
-pm2 logs hvac-ai
-
-# Last 100 lines
-pm2 logs hvac-ai --lines 100
-
-# Error logs only
-pm2 logs hvac-ai --err
-```
-
-### PM2 Monitoring
-
-```bash
-# Process info
-pm2 info hvac-ai
-
-# Resource usage
-pm2 monit
-
-# Web dashboard (optional)
-pm2 plus
-```
-
-## Maintenance
-
-### Restart Application
-
-```bash
-pm2 restart hvac-ai
-```
-
-### Update Code
-
-```bash
-cd /var/www/hvac-ai
-git pull origin main
-npm install --production
-pm2 restart hvac-ai
-```
-
-### Database Backup
-
-```bash
-# Create backup
-pg_dump -U hvacuser hvac_crm > backup_$(date +%Y%m%d).sql
-
-# Restore backup
-psql -U hvacuser hvac_crm < backup_20240209.sql
-```
-
 ## Troubleshooting
 
-### Application won't start
+### Email Not Sending
+- Verify Gmail credentials in `.env`
+- Check that 2-Step Verification is enabled
+- Ensure App Password is correct (16 chars, no spaces)
+- Check server logs: `Error: Invalid login` means wrong credentials
 
-```bash
-# Check logs
-pm2 logs hvac-ai --err
+### Database Connection Failed
+- System will send email but show warning in logs
+- Booking won't be stored in database
+- Email notification still works!
+- Fix database connection later
 
-# Check database connection
-psql -U hvacuser -d hvac_crm -c "SELECT 1"
+### Modal Not Opening
+- Check browser console for JavaScript errors
+- Verify `script.js` is loading (Network tab in DevTools)
+- Ensure paths are relative: `./script.js` not `/script.js`
 
-# Verify .env file
-cat /var/www/hvac-ai/.env
-```
+### CORS Errors
+- Backend already has CORS enabled
+- If still seeing errors, check backend `server.js` has `app.use(cors())`
 
-### Database connection errors
+## Google Calendar Integration (Future)
 
-```bash
-# Check PostgreSQL status
-sudo systemctl status postgresql
+To add Google Calendar integration:
+1. Set up OAuth2 credentials for the server's Gmail account
+2. Install `googleapis` package: `npm install googleapis`
+3. Add calendar creation logic to `/api/bookings` endpoint
+4. Reference existing Google Calendar agent code
 
-# Check PostgreSQL logs
-sudo tail -f /var/log/postgresql/postgresql-*.log
+## System Flow
 
-# Test connection
-psql -U hvacuser -d hvac_crm
-```
+1. Customer fills out booking form on website
+2. Form submits to `/api/bookings` endpoint
+3. Backend receives data:
+   - ✅ Sends email notification (PRIORITY - always works)
+   - ✅ Stores in database (OPTIONAL - gracefully fails if DB down)
+4. Frontend shows success message
+5. Modal closes after 5 seconds
 
-### Nginx errors
+## What You Need to Do Next
 
-```bash
-# Check Nginx status
-sudo systemctl status nginx
+1. ✅ Push all code to GitHub (see next section)
+2. ⚠️ On the server, run `npm install` to get nodemailer
+3. ⚠️ Create `.env` file with Gmail credentials
+4. ⚠️ Set up PostgreSQL database with `init_bookings.sql`
+5. ⚠️ Restart the backend server
+6. ✅ Test by submitting a booking form
 
-# Test configuration
-sudo nginx -t
+## Quick Deploy Checklist
 
-# View error logs
-sudo tail -f /var/log/nginx/error.log
-```
-
-## Security Checklist
-
-- [ ] Change default PostgreSQL password
-- [ ] Use strong SESSION_SECRET in .env
-- [ ] Enable firewall (ufw)
-- [ ] Setup SSL certificate
-- [ ] Disable root SSH login
-- [ ] Setup automated backups
-- [ ] Enable fail2ban (optional)
-- [ ] Keep system updated
-
-## Performance Optimization
-
-### Enable PostgreSQL Query Optimization
-
-```bash
-sudo nano /etc/postgresql/14/main/postgresql.conf
-
-# Adjust these values based on your server RAM:
-shared_buffers = 256MB
-effective_cache_size = 1GB
-work_mem = 10MB
-maintenance_work_mem = 128MB
-```
-
-### PM2 Cluster Mode (for high traffic)
-
-```bash
-pm2 start server.js --name hvac-ai -i max
-```
-
-## Quick Commands Reference
-
-```bash
-# Restart app
-pm2 restart hvac-ai
-
-# View logs
-pm2 logs hvac-ai
-
-# Reload Nginx
-sudo systemctl reload nginx
-
-# Backup database
-pg_dump -U hvacuser hvac_crm > backup.sql
-
-# Check disk space
-df -h
-
-# Check memory
-free -h
-
-# Check CPU
-htop
-```
+- [ ] Code pushed to GitHub
+- [ ] Server has Node.js v18+ installed
+- [ ] Backend dependencies installed (`npm install`)
+- [ ] `.env` file created with Gmail credentials
+- [ ] PostgreSQL database created
+- [ ] Database initialized with `init_bookings.sql`
+- [ ] Backend server running
+- [ ] Frontend files deployed
+- [ ] Test booking submitted successfully
+- [ ] Email notification received
+- [ ] Booking stored in database (check with SQL)
 
 ## Support
 
-If you encounter issues during deployment, check:
-1. PM2 logs: `pm2 logs hvac-ai`
-2. Nginx logs: `/var/log/nginx/error.log`
-3. PostgreSQL logs: `/var/log/postgresql/`
-
-For help: dutchiono@gmail.com
+If something breaks, check:
+1. Backend logs: `npm start` output
+2. Database connection: `psql -U postgres -d hvac_crm`
+3. Email credentials: Try logging into Gmail manually
+4. Browser console: Check for JavaScript errors
